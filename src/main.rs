@@ -38,12 +38,12 @@ mod utils;
 
 use crate::{app::App, event::EventHandler, tui::Tui, types::DEBUG_PRINT_LIMIT};
 
-/// JSON-reader
+/// JSON reader
 #[derive(Parser)]
 #[command(version, about)]
 struct Cli {
     /// File
-    #[arg(short, long)]
+    #[arg(value_name = "FILE")]
     file: PathBuf,
 
     /// Initial path
