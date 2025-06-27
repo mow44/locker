@@ -790,14 +790,12 @@ impl<'a> App<'a> {
     pub fn print(&self) -> anyhow::Result<()> {
         let rght_table_column = arg_context!(self.page.model().rght_table().hide_columns().get(0))?;
 
-        let result = arg_context!(rght_table_column.try_borrow())?
+        arg_context!(rght_table_column.try_borrow())?
             .entries()
             .iter()
-            .map(|entry| entry.name().clone())
-            .collect::<Vec<String>>()
-            .join(" ");
-
-        print!("{}", result);
+            .for_each(|entry| {
+                println!("{}", entry.name());
+            });
 
         anyhow::Ok(())
     }
