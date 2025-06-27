@@ -687,10 +687,9 @@ impl<'a> App<'a> {
         anyhow::Ok(())
     }
 
-    pub fn cursor_select(&mut self) -> anyhow::Result<()> {
-        let hovered_entry = arg_context!(node_by_path(&self.root, &self.path))?
-            .entry()
-            .clone();
+    pub fn select_entry(&mut self) -> anyhow::Result<()> {
+        let node = arg_context!(node_by_path(&self.root, &self.path))?;
+        let hovered_entry = node.entry();
 
         let [new_left_width, new_rght_width] =
             arg_context!(self.preferences.apply_term_width(self.terminal_size.width))?;
@@ -713,37 +712,10 @@ impl<'a> App<'a> {
             let entry_in_rght_table = {
                 let rght_table_column =
                     arg_context!(model.rght_table_mut().hide_columns_mut().get_mut(0))?;
-                let mut rght_table_column = arg_context!(rght_table_column.try_borrow_mut())?;
+                let rght_table_column = arg_context!(rght_table_column.try_borrow_mut())?;
 
-                let is_entry_in_rght_table = rght_table_column.entries().contains(&hovered_entry);
-
-                if is_entry_in_rght_table {
-                    rght_table_column
-                        .entries_mut()
-                        .retain(|entry| *entry != hovered_entry);
-                } else {
-                    rght_table_column
-                        .entries_mut()
-                        .insert(0, hovered_entry.clone());
-                }
-
-                is_entry_in_rght_table
+                rght_table_column.entries().contains(hovered_entry)
             };
-
-            let after = {
-                let rght_table_column = arg_context!(model.rght_table().hide_columns().get(0))?;
-                let rght_table_column = arg_context!(rght_table_column.try_borrow())?;
-
-                rght_table_column.entries().is_empty()
-            };
-
-            if after != before {
-                arg_context!(model.set_rght_table_width(if after {
-                    0
-                } else {
-                    self.preferences.rght_table_column_width().clone()
-                }))?;
-            }
 
             raw_context!(model
                 .left_table_mut()
@@ -753,7 +725,7 @@ impl<'a> App<'a> {
                     if entry_in_rght_table {
                         arg_context!(column.try_borrow_mut())?
                             .selected_entries_mut()
-                            .retain(|entry| *entry != hovered_entry);
+                            .retain(|entry| entry != hovered_entry);
                     } else {
                         arg_context!(column.try_borrow_mut())?
                             .selected_entries_mut()
@@ -770,9 +742,15 @@ impl<'a> App<'a> {
                 .try_for_each(|column| {
                     if entry_in_rght_table {
                         arg_context!(column.try_borrow_mut())?
+                            .entries_mut()
+                            .retain(|entry| entry != hovered_entry);
+                        arg_context!(column.try_borrow_mut())?
                             .selected_entries_mut()
-                            .retain(|entry| *entry != hovered_entry);
+                            .retain(|entry| entry != hovered_entry);
                     } else {
+                        arg_context!(column.try_borrow_mut())?
+                            .entries_mut()
+                            .insert(0, hovered_entry.clone());
                         arg_context!(column.try_borrow_mut())?
                             .selected_entries_mut()
                             .insert(0, hovered_entry.clone());
@@ -780,6 +758,160 @@ impl<'a> App<'a> {
 
                     anyhow::Ok(())
                 }))?;
+
+            let after = {
+                let rght_table_column = arg_context!(model.rght_table().hide_columns().get(0))?;
+                let rght_table_column = arg_context!(rght_table_column.try_borrow())?;
+
+                rght_table_column.entries().is_empty()
+            };
+
+            if after != before {
+                arg_context!(model.set_rght_table_width(if after {
+                    0
+                } else {
+                    self.preferences.rght_table_column_width().clone()
+                }))?;
+            }
+
+            anyhow::Ok(())
+        }))?;
+
+        anyhow::Ok(())
+    }
+
+    pub fn select_column(&mut self) -> anyhow::Result<()> {
+        let cut = arg_context!(self.path.len().checked_sub(1))?;
+        let hovered_column = node_by_path(&self.root, &self.path[0..cut])?;
+
+        let [new_left_width, new_rght_width] =
+            arg_context!(self.preferences.apply_term_width(self.terminal_size.width))?;
+
+        raw_context!(self.page.try_with_model_mut(|model| {
+            if let Some(new_width) = new_left_width {
+                arg_context!(model.set_left_table_width(new_width))?;
+            }
+            if let Some(new_width) = new_rght_width {
+                arg_context!(model.set_rght_table_width(new_width))?;
+            }
+
+            let before = {
+                let rght_table_column = arg_context!(model.rght_table().hide_columns().get(0))?;
+                let rght_table_column = arg_context!(rght_table_column.try_borrow())?;
+
+                rght_table_column.entries().is_empty()
+            };
+
+            let mut all_entries_already_selected = true;
+
+            // First loop (inserting only)
+            for child in hovered_column.children().iter() {
+                let hovered_entry = child.entry();
+
+                let entry_in_rght_table = {
+                    let rght_table_column =
+                        arg_context!(model.rght_table_mut().hide_columns_mut().get_mut(0))?;
+                    let rght_table_column = arg_context!(rght_table_column.try_borrow_mut())?;
+
+                    rght_table_column.entries().contains(hovered_entry)
+                };
+
+                if !entry_in_rght_table {
+                    all_entries_already_selected = false;
+                }
+
+                raw_context!(model
+                    .left_table_mut()
+                    .hide_columns_mut()
+                    .iter_mut()
+                    .try_for_each(|column| {
+                        if !entry_in_rght_table {
+                            arg_context!(column.try_borrow_mut())?
+                                .selected_entries_mut()
+                                .insert(0, hovered_entry.clone());
+                        }
+
+                        anyhow::Ok(())
+                    }))?;
+
+                raw_context!(model
+                    .rght_table_mut()
+                    .hide_columns_mut()
+                    .iter_mut()
+                    .try_for_each(|column| {
+                        if !entry_in_rght_table {
+                            arg_context!(column.try_borrow_mut())?
+                                .entries_mut()
+                                .insert(0, hovered_entry.clone());
+                            arg_context!(column.try_borrow_mut())?
+                                .selected_entries_mut()
+                                .insert(0, hovered_entry.clone());
+                        }
+
+                        anyhow::Ok(())
+                    }))?;
+            }
+
+            // Second loop (deletes all entries if all of them are already selected)
+            if all_entries_already_selected {
+                for child in hovered_column.children().iter() {
+                    let hovered_entry = child.entry();
+
+                    let entry_in_rght_table = {
+                        let rght_table_column =
+                            arg_context!(model.rght_table_mut().hide_columns_mut().get_mut(0))?;
+                        let rght_table_column = arg_context!(rght_table_column.try_borrow_mut())?;
+
+                        rght_table_column.entries().contains(hovered_entry)
+                    };
+
+                    raw_context!(model
+                        .left_table_mut()
+                        .hide_columns_mut()
+                        .iter_mut()
+                        .try_for_each(|column| {
+                            if entry_in_rght_table {
+                                arg_context!(column.try_borrow_mut())?
+                                    .selected_entries_mut()
+                                    .retain(|entry| entry != hovered_entry);
+                            }
+
+                            anyhow::Ok(())
+                        }))?;
+
+                    raw_context!(model
+                        .rght_table_mut()
+                        .hide_columns_mut()
+                        .iter_mut()
+                        .try_for_each(|column| {
+                            if entry_in_rght_table {
+                                arg_context!(column.try_borrow_mut())?
+                                    .entries_mut()
+                                    .retain(|entry| entry != hovered_entry);
+                                arg_context!(column.try_borrow_mut())?
+                                    .selected_entries_mut()
+                                    .retain(|entry| entry != hovered_entry);
+                            }
+
+                            anyhow::Ok(())
+                        }))?;
+                }
+            }
+
+            let after = {
+                let rght_table_column = arg_context!(model.rght_table().hide_columns().get(0))?;
+                let rght_table_column = arg_context!(rght_table_column.try_borrow())?;
+
+                rght_table_column.entries().is_empty()
+            };
+
+            if after != before {
+                arg_context!(model.set_rght_table_width(if after {
+                    0
+                } else {
+                    self.preferences.rght_table_column_width().clone()
+                }))?;
+            }
 
             anyhow::Ok(())
         }))?;

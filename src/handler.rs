@@ -18,6 +18,9 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> anyhow::Result<(
         KeyCode::Char('c') | KeyCode::Backspace => {
             arg_context!(app.clear_selected())?;
         }
+        KeyCode::Char('A') => {
+            arg_context!(app.select_column())?;
+        }
         KeyCode::Down | KeyCode::Char('J') if key_event.modifiers == KeyModifiers::SHIFT => {
             arg_context!(app.dec_left_table_column_width())?;
         }
@@ -43,7 +46,7 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> anyhow::Result<(
             arg_context!(app.cursor_move(CursorDirection::Left))?
         },
         KeyCode::Enter | KeyCode::Char(' ') => {
-            arg_context!(app.cursor_select())?
+            arg_context!(app.select_entry())?
         },
         _ => {}
     }
