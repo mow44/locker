@@ -7,7 +7,9 @@ use crate::{
 };
 
 pub fn clip_string(mut string: String, ending: &str, length: usize) -> String {
-    if string.chars().count() > length {
+    if length == 0 {
+        string = String::default();
+    } else if string.chars().count() > length {
         string = format!(
             "{}{}",
             string
@@ -16,10 +18,6 @@ pub fn clip_string(mut string: String, ending: &str, length: usize) -> String {
                 .collect::<String>(),
             ending
         );
-    }
-
-    if length == 0 {
-        string = String::default();
     }
 
     string

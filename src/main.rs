@@ -42,15 +42,14 @@ use crate::{app::App, event::EventHandler, tui::Tui, types::DEBUG_PRINT_LIMIT};
 #[derive(Parser)]
 #[command(version, about)]
 struct Cli {
-    /// File
     #[arg(value_name = "FILE")]
     file: PathBuf,
 
-    /// Initial path
+    /// Initial cursor position. Specified as a sequence of positive indices separated by commas, for example: "[0,0,0]", "[3,0,1]", or "4,1,1,0".
     #[arg(short, long, value_parser = path_parser, default_value = "[0]")]
     path: Box<[Step]>,
 
-    /// Debug print limit
+    /// Controls the amount of function argument info shown in tracebacks after a crash. Only useful when debugging.
     #[arg(short, long, default_value = "1")]
     debug_print_limit: usize,
 }
