@@ -1,11 +1,7 @@
-use std::sync::OnceLock;
-
 use impl_helper::ImplHelper;
 use wrap_context::arg_context;
 
 use crate::render::Render;
-
-pub static DEBUG_PRINT_LIMIT: OnceLock<usize> = OnceLock::new();
 
 pub type Step = usize; // TODO maybe remove
 pub type Path = Vec<Step>;

@@ -117,7 +117,7 @@ fn describe_expr(expr: &Expr, print_args: bool) -> proc_macro2::TokenStream {
                     quote!(crate::utils::clip_string(
                         format!("{:?}", #arg),
                         "…",
-                        *crate::types::DEBUG_PRINT_LIMIT.get().unwrap_or(&1) // FIXME move to utils
+                        *crate::utils::DEBUG_PRINT_LIMIT.get().unwrap_or(&1)
                     ))
                 });
 
@@ -144,7 +144,7 @@ fn describe_expr(expr: &Expr, print_args: bool) -> proc_macro2::TokenStream {
                     quote!(crate::utils::clip_string(
                         format!("{:?}", #arg),
                         "…",
-                        *crate::types::DEBUG_PRINT_LIMIT.get().unwrap_or(&1)
+                        *crate::utils::DEBUG_PRINT_LIMIT.get().unwrap_or(&1)
                     ))
                 });
 

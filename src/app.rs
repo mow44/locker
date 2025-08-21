@@ -6,7 +6,6 @@ use ratatui::{
     widgets::Clear,
     Frame,
 };
-use serde_json::value::RawValue;
 use std::{cell::RefCell, path::PathBuf, rc::Rc};
 use wrap_context::{arg_context, liab, raw_context};
 
@@ -107,9 +106,13 @@ impl<'a> App<'a> {
     pub fn new(
         terminal_size: Size,
         file: &PathBuf,
-        raw_value: &'a RawValue,
+        source: &'a [u8],
         path: Box<[Step]>,
     ) -> anyhow::Result<Self> {
+        if source.is_empty() {
+            liab!("Provided file does not contain any data to show");
+        }
+
         let mut preferences = Preferences::default();
         arg_context!(preferences.apply_term_width(terminal_size.width))?;
 
@@ -150,8 +153,14 @@ impl<'a> App<'a> {
         .flex(Flex::SpaceBetween)
         .areas(bottom_textline_area);
 
-        let paginator = Paginator::new(page_area.height.into(), 0, None);
-        let mut root = Node::new(Some(raw_value), Rc::new(Entry::default()), paginator);
+        let source_location = Location::new(0, arg_context!(source.len().checked_sub(1))?);
+        let mut root = arg_context!(Node::new(
+            source,
+            Some(source_location),
+            Rc::new(Entry::default()),
+            Paginator::new(page_area.height.into(), 0, None)
+        ))?;
+
         let path = arg_context!(validate_path(&mut root, &path))?;
         if path.is_empty() {
             liab!("Provided file does not contain any data to show");

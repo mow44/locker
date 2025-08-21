@@ -1,10 +1,13 @@
-use serde_json::value::RawValue;
+use impl_helper::ImplHelper;
+use std::sync::OnceLock;
 use wrap_context::{arg_context, liab};
 
 use crate::{
     node::Node,
     types::{CursorDirection, Path, Step},
 };
+
+pub static DEBUG_PRINT_LIMIT: OnceLock<usize> = OnceLock::new();
 
 pub fn clip_string(mut string: String, ending: &str, length: usize) -> String {
     if length == 0 {
@@ -23,20 +26,28 @@ pub fn clip_string(mut string: String, ending: &str, length: usize) -> String {
     string
 }
 
-#[derive(Debug)]
-pub enum RawValueType {
-    Object,
-    Array,
-    Other,
+#[derive(Debug, Clone, Copy, ImplHelper, PartialEq)]
+pub struct Location {
+    #[helper(all)]
+    start: usize,
+
+    #[helper(all)]
+    finish: usize,
 }
 
-pub fn raw_value_type(raw_value: &RawValue) -> RawValueType {
-    if raw_value.get().starts_with('{') {
-        RawValueType::Object
-    } else if raw_value.get().starts_with('[') {
-        RawValueType::Array
-    } else {
-        RawValueType::Other
+impl Location {
+    pub fn new(start: usize, finish: usize) -> Self {
+        Self { start, finish }
+    }
+}
+
+pub trait SliceFromLocation<T> {
+    fn slice(&self, location: &Location) -> &[T];
+}
+
+impl<T> SliceFromLocation<T> for [T] {
+    fn slice(&self, location: &Location) -> &[T] {
+        &self[location.start..=location.finish]
     }
 }
 
@@ -224,6 +235,10 @@ pub fn validate_path(root: &mut Node, path_slice: &[Step]) -> anyhow::Result<Pat
 
     for (i, step) in path.iter_mut().enumerate() {
         if current_node.children().is_empty() {
+            // if let Err(e) = current_node.make_children(*step) {
+            //     // liab!("{}", from_utf8(current_node.source().unwrap())?.to_string());
+            //     liab!("{:#?}", e);
+            // }
             *step = arg_context!(current_node.make_children(*step))?;
         }
 
