@@ -69,7 +69,7 @@ The parser recognizes several kinds of tokens:
 
 | Kind     | Description                                                                                      |
 |----------|--------------------------------------------------------------------------------------------------|
-| LastChar | Marks the end of the previous token                                                              |
+| LastChar | Indicates that there are no more tokens                                                          |
 | Comma    | ,                                                                                                |
 | Colon    | :                                                                                                |
 | Object   | {...}                                                                                            |
