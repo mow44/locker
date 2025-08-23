@@ -69,100 +69,8 @@ fn exit<B: Backend>(tui: &mut Tui<B>) {
     }
 }
 
-// fn count_bytes(needle: u8, haystack: &[u8]) -> anyhow::Result<usize> {
-//     if let Some(position) = memchr(needle, haystack) {
-//         if arg_context!(position.checked_add(1))? >= haystack.len() {
-//             return anyhow::Ok(1);
-//         } else {
-//             return anyhow::Ok(
-//                 1 + raw_context!(count_bytes(
-//                     needle,
-//                     &haystack[arg_context!(position.checked_add(1))?..]
-//                 ))?,
-//             );
-//         }
-//     } else {
-//         return anyhow::Ok(0);
-//     }
-// }
-
-// fn count_open_square(counted_before: usize, haystack: &[u8]) -> anyhow::Result<usize> {
-//     if let Some(position) = memchr(b'[', haystack) {
-//         if arg_context!(position.checked_add(1))? >= haystack.len() {
-//             return anyhow::Ok(1);
-//         }
-
-//         let quote_counter =
-//             arg_context!(count_bytes(b'"', &haystack[..position]))? + counted_before;
-
-//         if quote_counter % 2 == 0 {
-//             return anyhow::Ok(
-//                 1 + raw_context!(count_open_square(
-//                     quote_counter,
-//                     &haystack[arg_context!(position.checked_add(1))?..]
-//                 ))?,
-//             );
-//         } else {
-//             return anyhow::Ok(
-//                 0 + raw_context!(count_open_square(
-//                     quote_counter,
-//                     &haystack[arg_context!(position.checked_add(1))?..]
-//                 ))?,
-//             );
-//         }
-//     } else {
-//         return anyhow::Ok(0);
-//     }
-// }
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // let haystack = b"[a[b]";
-
-    // let mut position: usize = 0;
-    // let mut current_byte = Some(&b'[');
-
-    // let mut square_start = position;
-    // let mut square_end = 0;
-    // let mut search_start = arg_context!(square_start.checked_add(1))?;
-    // if search_start >= haystack.len() {
-    //     liab!("overflow");
-    // }
-
-    // let mut counter = 0;
-    // let mut open_quote_counted = 0;
-
-    // loop {
-    //     if let Some(pos) = memchr(b']', &haystack[search_start..]) {
-    //         square_end = search_start + pos;
-
-    //         position = square_end;
-    //         current_byte = Some(&b']');
-
-    //         open_quote_counted +=
-    //             arg_context!(count_bytes(b'"', &haystack[search_start..square_end]))?;
-    //         if open_quote_counted % 2 != 0 {
-    //             search_start = square_end + 1;
-    //             continue;
-    //         }
-
-    //         counter += arg_context!(count_open_square(0, &haystack[search_start..square_end]))?;
-
-    //         if counter == 0 {
-    //             break;
-    //         } else {
-    //             counter -= 1;
-    //             search_start = square_end + 1;
-    //         }
-    //     } else {
-    //         liab!("Not found ]");
-    //     }
-    // }
-
-    // liab!("{:?} - {:?}", square_start, square_end);
-
-    // return anyhow::Ok(());
-
     let args = Cli::parse();
 
     raw_context!(DEBUG_PRINT_LIMIT
@@ -180,15 +88,6 @@ async fn main() -> anyhow::Result<()> {
         err
     })?;
 
-    // let mut buf_reader = BufReader::new(arg_context!(File::open(&args.file)).map_err(|err| {
-    //     exit(&mut tui);
-    //     err
-    // })?);
-    // let mut raw_value = String::default();
-    // arg_context!(buf_reader.read_to_string(&mut raw_value)).map_err(|err| {
-    //     exit(&mut tui);
-    //     err
-    // })?;
     let file = arg_context!(File::open(&args.file)).map_err(|err| {
         exit(&mut tui);
         err
